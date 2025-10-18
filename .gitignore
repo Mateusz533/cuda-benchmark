@@ -47,6 +47,6 @@ CMakeLists.txt.*
 # Other
 *.pdf
 .cache/
-local/*
-temp/*
-img/*
+Local/*
+Temp/*
+Images/*

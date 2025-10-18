@@ -6,5 +6,5 @@ InlayHints:
     DeducedTypes: Yes
     TypeNameLimit: 10
 CompileFlags:
-    Add: [-xcuda, --cuda-path=/usr/local/cuda, --cuda-gpu-arch=sm_61]
+    Add: [-xcuda, --cuda-path=/usr/local/cuda, --no-cuda-version-check]
     Remove: [--generate-code=*, -forward-unknown-to-host-compiler]

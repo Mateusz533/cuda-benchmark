@@ -30,11 +30,11 @@ message(STATUS "Found OpenCV ${OpenCV_VERSION} in ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "Found CUDA ${CUDA_VERSION} in ${CUDA_INCLUDE_DIRS}")
 
 # Compile source files
-file(GLOB_RECURSE SOURCES Main/*)
+file(GLOB_RECURSE SOURCES Main/* CudaUtils/*)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Include external header files
-target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE CudaUtils ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS})
 
 # Link external libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} cufft)

@@ -15,6 +15,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # NVCC compiler settings
 set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_ARCHITECTURES 61)
 
 # Build settings
 set(CMAKE_BUILD_TYPE Release)
@@ -30,7 +31,12 @@ message(STATUS "Found OpenCV ${OpenCV_VERSION} in ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "Found CUDA ${CUDA_VERSION} in ${CUDA_INCLUDE_DIRS}")
 
 # Compile source files
-file(GLOB_RECURSE SOURCES Main/* CudaUtils/*)
+file(
+    GLOB_RECURSE
+    SOURCES
+    Main/*
+    CudaUtils/*
+)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Include external header files

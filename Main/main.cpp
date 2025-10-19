@@ -8,6 +8,36 @@
 //
 #include "CudaFun.cuh"
 
+template<size_t N, typename Fun, typename... Args>
+inline void runPerformanceTest(const std::string& name, Fun&& fun, Args&... args) {
+	std::cout << "Test of calling `" << name << "`:" << std::endl;
+	{
+		using ResultType = std::invoke_result_t<Fun, Args&...>;
+		auto callable = std::forward<Fun>(fun);
+
+		const auto startTime = std::chrono::high_resolution_clock::now();
+
+		for(int i = 0; i < N; ++i) {
+			std::invoke(callable, args...);
+		}
+
+		const auto endTime = std::chrono::high_resolution_clock::now();
+
+		const auto totalTimeUs = std::chrono::duration<double, std::micro>(endTime - startTime).count();
+		printf("- One call period: %8.3f us\n", totalTimeUs / N);
+
+		if constexpr(!std::is_void_v<ResultType>) {
+			const auto lastResult = std::invoke(callable, args...);
+
+			std::cout << "- Last result: ";
+			if constexpr(std::is_same_v<ResultType, bool>)
+				std::cout << std::boolalpha;
+			std::cout << lastResult << std::endl;
+		}
+	}
+	std::cout << std::endl;
+}
+
 int main() {
 	constexpr size_t N = 1'000;
 
@@ -21,17 +51,12 @@ int main() {
 
 	cv::cuda::GpuMat tempDest;
 
-	{
-		std::cout << "Test of calling `processImageWithCuda`:" << std::endl;
+	/* ======================================================================================================================== */
 
-		const auto startTime = std::chrono::high_resolution_clock::now();
+	runPerformanceTest<N>("processImageWithCuda (BGR image)", processImageWithCuda, bgrImg, tempDest);
 
-		for(int i = 0; i < N; ++i)
-			processImageWithCuda(bgrImg, tempDest);
-
-		const auto endTime = std::chrono::high_resolution_clock::now();
-
-		const auto totalTimeUs = std::chrono::duration<double, std::micro>(endTime - startTime).count();
-		printf("- One call period: %8.3f us\n", totalTimeUs / N);
-	}
+	constexpr auto copyTo = (void(cv::cuda::GpuMat::*)(cv::cuda::GpuMat&) const)(&cv::cuda::GpuMat::copyTo);
+	runPerformanceTest<N>("copyTo (GRAY image)", copyTo, grayImg, tempDest);
+	runPerformanceTest<N>("copyTo (BGR image)", copyTo, bgrImg, tempDest);
+	runPerformanceTest<N>("copyTo (BGRA image)", copyTo, bgraImg, tempDest);
 }

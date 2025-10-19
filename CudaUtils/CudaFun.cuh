@@ -14,5 +14,6 @@
 #include <opencv4/opencv2/core/types.hpp>
 #include <opencv4/opencv2/core/version.hpp>
 
-// Declaration of function from file .cu
+// Declaration of functions from file .cu
 void processImageWithCuda(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst);
+void processImageWithCudaAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, cv::cuda::Stream& stream);

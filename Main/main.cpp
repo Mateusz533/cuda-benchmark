@@ -15,6 +15,9 @@ inline void runPerformanceTest(const std::string& name, Fun&& fun, Args&... args
 		using ResultType = std::invoke_result_t<Fun, Args&...>;
 		auto callable = std::forward<Fun>(fun);
 
+		// Do not measure initialization time
+		std::invoke(callable, args...);
+
 		const auto startTime = std::chrono::high_resolution_clock::now();
 
 		for(int i = 0; i < N; ++i) {

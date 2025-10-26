@@ -6,7 +6,7 @@
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/opencv.hpp>
 //
-#include "CudaFun.cuh"
+#include "CudaUtils.cuh"
 
 template<size_t N, typename Fun, typename... Args>
 inline void runPerformanceTest(const std::string& name, Fun&& fun, Args&... args) {
@@ -104,8 +104,8 @@ int main() {
 
 	/* ======================================================================================================================== */
 
-	runPerformanceTest<N>("processImageWithCuda (BGR image)", processImageWithCuda, bgrImg, tempDest);
-	runPerformanceTestWithStream<N>("processImageWithCudaAsync (BGR image)", processImageWithCudaAsync, bgrImg, tempDest);
+	runPerformanceTest<N>("processImageWithCuda (BGR image)", CudaUtils::processImageWithCuda, bgrImg, tempDest);
+	runPerformanceTestWithStream<N>("processImageWithCudaAsync (BGR image)", CudaUtils::processImageWithCudaAsync, bgrImg, tempDest);
 
 	constexpr auto syncCopyTo = (void(cv::cuda::GpuMat::*)(cv::cuda::GpuMat&) const)(&cv::cuda::GpuMat::copyTo);
 	runPerformanceTest<N>("copyTo (GRAY image)", syncCopyTo, grayImg, tempDest);

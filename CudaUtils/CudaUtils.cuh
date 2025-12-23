@@ -1,13 +1,13 @@
 #pragma once
 //
-#include <opencv4/opencv2/core/cvdef.h>
-#include <opencv4/opencv2/core/hal/interface.h>
+#include <opencv2/core/cvdef.h>
+#include <opencv2/core/hal/interface.h>
 //
-#include <opencv4/opencv2/core.hpp>
-#include <opencv4/opencv2/core/cuda.hpp>
-#include <opencv4/opencv2/core/mat.hpp>
-#include <opencv4/opencv2/core/types.hpp>
-#include <opencv4/opencv2/core/version.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/core/cuda.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/core/version.hpp>
 
 namespace CudaUtils
 {

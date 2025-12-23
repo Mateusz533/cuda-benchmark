@@ -1,7 +1,7 @@
 #include "CudaUtils.cuh"
 //
 #ifdef HAS_CUDA
-#	include <opencv4/opencv2/core/cuda_stream_accessor.hpp>
+#	include <opencv2/core/cuda_stream_accessor.hpp>
 #endif
 //
 #include "Kernels.cuh"

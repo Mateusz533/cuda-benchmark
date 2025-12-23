@@ -1,10 +1,10 @@
 InlayHints:
-    Enabled: Yes
-    BlockEnd: No
-    Designators: Yes
-    ParameterNames: Yes
-    DeducedTypes: Yes
-    TypeNameLimit: 10
+  Enabled: Yes
+  BlockEnd: No
+  Designators: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  TypeNameLimit: 10
 CompileFlags:
-    Add: [-xcuda, --cuda-path=/usr/local/cuda, --no-cuda-version-check]
-    Remove: [--generate-code=*, -forward-unknown-to-host-compiler]
+  Add: [-xcuda, --cuda-path=/usr/local/cuda, --no-cuda-version-check]
+  Remove: [--generate-code=*, -forward-unknown-to-host-compiler]

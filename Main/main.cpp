@@ -4,15 +4,16 @@
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/cudaimgproc.hpp>
+#include <opencv2/cudawarping.hpp>
 #include <opencv2/imgcodecs.hpp>
 //
 #include "CudaUtils.cuh"
 
 template<size_t N, typename Fun, typename... Args>
-inline void runPerformanceTest(const std::string& name, Fun&& fun, Args&... args) {
+inline void runPerformanceTest(const std::string& name, Fun&& fun, Args&&... args) {
 	std::cout << "Test of calling synchronous function \033[34m`" << name << "`\033[0m:" << std::endl;
 	{
-		using ResultType = std::invoke_result_t<Fun, Args&...>;
+		using ResultType = std::invoke_result_t<Fun, Args&&...>;
 		auto callable = std::forward<Fun>(fun);
 
 		// Do not measure initialization time
@@ -42,10 +43,10 @@ inline void runPerformanceTest(const std::string& name, Fun&& fun, Args&... args
 }
 
 template<size_t N, typename Fun, typename... Args>
-inline void runPerformanceTestWithStream(const std::string& name, Fun&& fun, Args&... args) {
+inline void runPerformanceTestWithStream(const std::string& name, Fun&& fun, Args&&... args) {
 	std::cout << "Test of calling asynchronous function \033[32m`" << name << "`\033[0m:" << std::endl;
 	{
-		using ResultType = std::invoke_result_t<Fun, Args&..., cv::cuda::Stream&>;
+		using ResultType = std::invoke_result_t<Fun, Args&&..., cv::cuda::Stream&>;
 		auto callable = std::forward<Fun>(fun);
 
 		cv::cuda::Stream stream;
@@ -99,6 +100,11 @@ int main() {
 	cv::cuda::GpuMat bgraImg{};
 	cv::cuda::cvtColor(bgrImg, grayImg, cv::COLOR_BGR2GRAY);
 	cv::cuda::cvtColor(bgrImg, bgraImg, cv::COLOR_BGR2BGRA);
+	cv::Mat_<double> affineTranform{
+		{2, 3},
+		{+0.8, -0.6, +0.1 * grayImg.cols + 0.3 * grayImg.rows,
+		 +0.6, +0.8, -0.3 * grayImg.cols + 0.1 * grayImg.rows},
+	};
 
 	cv::cuda::GpuMat tempDest;
 
@@ -107,13 +113,18 @@ int main() {
 	runPerformanceTest<N>("processImageWithCuda (BGR image)", CudaUtils::processImageWithCuda, bgrImg, tempDest);
 	runPerformanceTestWithStream<N>("processImageWithCudaAsync (BGR image)", CudaUtils::processImageWithCudaAsync, bgrImg, tempDest);
 
-	constexpr auto syncCopyTo = (void(cv::cuda::GpuMat::*)(cv::cuda::GpuMat&) const)(&cv::cuda::GpuMat::copyTo);
+	constexpr auto syncCopyTo = static_cast<void (cv::cuda::GpuMat::*)(cv::cuda::GpuMat&) const>(&cv::cuda::GpuMat::copyTo);
 	runPerformanceTest<N>("copyTo (GRAY image)", syncCopyTo, grayImg, tempDest);
 	runPerformanceTest<N>("copyTo (BGR  image)", syncCopyTo, bgrImg, tempDest);
 	runPerformanceTest<N>("copyTo (BGRA image)", syncCopyTo, bgraImg, tempDest);
 
-	constexpr auto asyncCopyTo = (void(cv::cuda::GpuMat::*)(cv::cuda::GpuMat&, cv::cuda::Stream&) const)(&cv::cuda::GpuMat::copyTo);
+	constexpr auto asyncCopyTo = static_cast<void (cv::cuda::GpuMat::*)(cv::cuda::GpuMat&, cv::cuda::Stream&) const>(&cv::cuda::GpuMat::copyTo);
 	runPerformanceTestWithStream<N>("copyTo (GRAY image)", asyncCopyTo, grayImg, tempDest);
 	runPerformanceTestWithStream<N>("copyTo (BGR  image)", asyncCopyTo, bgrImg, tempDest);
 	runPerformanceTestWithStream<N>("copyTo (BGRA image)", asyncCopyTo, bgraImg, tempDest);
+
+	constexpr auto asyncWarpAffine = static_cast<void (*)(cv::InputArray, cv::OutputArray, cv::InputArray, cv::Size, int, int, cv::Scalar, cv::cuda::Stream&)>(&cv::cuda::warpAffine);
+	runPerformanceTestWithStream<N>("warpAffine (GRAY image)", asyncWarpAffine, grayImg, tempDest, affineTranform, grayImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+	runPerformanceTestWithStream<N>("warpAffine (BGR  image)", asyncWarpAffine, bgrImg, tempDest, affineTranform, bgrImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+	runPerformanceTestWithStream<N>("warpAffine (BGRA image)", asyncWarpAffine, bgraImg, tempDest, affineTranform, bgraImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 }

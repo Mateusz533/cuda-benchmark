@@ -100,11 +100,9 @@ int main() {
 	cv::cuda::GpuMat bgraImg{};
 	cv::cuda::cvtColor(bgrImg, grayImg, cv::COLOR_BGR2GRAY);
 	cv::cuda::cvtColor(bgrImg, bgraImg, cv::COLOR_BGR2BGRA);
-	cv::Mat_<double> affineTranform{
-		{2, 3},
-		{+0.8, -0.6, +0.1 * grayImg.cols + 0.3 * grayImg.rows,
-		 +0.6, +0.8, -0.3 * grayImg.cols + 0.1 * grayImg.rows},
-	};
+	cv::Matx23d affineTransform = {
+		+0.8, -0.6, +0.1 * grayImg.cols + 0.3 * grayImg.rows,
+		+0.6, +0.8, -0.3 * grayImg.cols + 0.1 * grayImg.rows};
 
 	cv::cuda::GpuMat tempDest;
 
@@ -124,7 +122,7 @@ int main() {
 	runPerformanceTestWithStream<N>("copyTo (BGRA image)", asyncCopyTo, bgraImg, tempDest);
 
 	constexpr auto asyncWarpAffine = static_cast<void (*)(cv::InputArray, cv::OutputArray, cv::InputArray, cv::Size, int, int, cv::Scalar, cv::cuda::Stream&)>(&cv::cuda::warpAffine);
-	runPerformanceTestWithStream<N>("warpAffine (GRAY image)", asyncWarpAffine, grayImg, tempDest, affineTranform, grayImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-	runPerformanceTestWithStream<N>("warpAffine (BGR  image)", asyncWarpAffine, bgrImg, tempDest, affineTranform, bgrImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-	runPerformanceTestWithStream<N>("warpAffine (BGRA image)", asyncWarpAffine, bgraImg, tempDest, affineTranform, bgraImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+	runPerformanceTestWithStream<N>("warpAffine (GRAY image)", asyncWarpAffine, grayImg, tempDest, affineTransform, grayImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+	runPerformanceTestWithStream<N>("warpAffine (BGR  image)", asyncWarpAffine, bgrImg, tempDest, affineTransform, bgrImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+	runPerformanceTestWithStream<N>("warpAffine (BGRA image)", asyncWarpAffine, bgraImg, tempDest, affineTransform, bgraImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 }

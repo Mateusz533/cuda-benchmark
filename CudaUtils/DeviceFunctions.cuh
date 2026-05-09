@@ -25,14 +25,21 @@ namespace CudaUtils
 		return ((const T*)((const uchar*)array + y * pitchBytes))[x];
 	}
 
-	__device__ __forceinline__ int isInRange(int v, int minVal, int maxVal) {
+	template<typename T>
+	__device__ __forceinline__ T warpReduceSum(T val) {
+		for(int offset = warpSize / 2; offset > 0; offset /= 2) {
+			val += __shfl_down_sync(0xffffffff, val, offset);
+		}
+		return val;
+	}
+
+	template<typename T>
+	__device__ __forceinline__ T isInRange(T v, T minVal, T maxVal) {
 		return minVal <= v && v <= maxVal;
 	}
 
 	template<typename T>
-	__device__ __forceinline__ T warpReduceSum(T val) {
-		for(int offset = warpSize / 2; offset > 0; offset /= 2)
-			val += __shfl_down_sync(0xffffffff, val, offset);
-		return val;
+	__device__ __forceinline__ T clamp(T v, T minVal, T maxVal) {
+		return v < minVal ? minVal : (v > maxVal ? maxVal : v);
 	}
 }

@@ -111,6 +111,16 @@ int main() {
 	runPerformanceTest<N>("processImageWithCuda (BGR image)", CudaUtils::processImageWithCuda, bgrImg, tempDest);
 	runPerformanceTestWithStream<N>("processImageWithCudaAsync (BGR image)", CudaUtils::processImageWithCudaAsync, bgrImg, tempDest);
 
+	/* ======================================================================================================================== */
+
+	runPerformanceTest<N>("invertColor (GRAY image)", CudaUtils::invertColor, grayImg, tempDest);
+	runPerformanceTest<N>("invertColor (BGR  image)", CudaUtils::invertColor, bgrImg, tempDest);
+	runPerformanceTest<N>("invertColor (BGRA image)", CudaUtils::invertColor, bgraImg, tempDest);
+
+	runPerformanceTestWithStream<N>("invertColorAsync (GRAY image)", CudaUtils::invertColorAsync, grayImg, tempDest);
+	runPerformanceTestWithStream<N>("invertColorAsync (BGR  image)", CudaUtils::invertColorAsync, bgrImg, tempDest);
+	runPerformanceTestWithStream<N>("invertColorAsync (BGRA image)", CudaUtils::invertColorAsync, bgraImg, tempDest);
+
 	constexpr auto syncCopyTo = static_cast<void (cv::cuda::GpuMat::*)(cv::cuda::GpuMat&) const>(&cv::cuda::GpuMat::copyTo);
 	runPerformanceTest<N>("copyTo (GRAY image)", syncCopyTo, grayImg, tempDest);
 	runPerformanceTest<N>("copyTo (BGR  image)", syncCopyTo, bgrImg, tempDest);

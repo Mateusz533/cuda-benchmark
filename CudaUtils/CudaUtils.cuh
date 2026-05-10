@@ -11,7 +11,14 @@
 
 namespace CudaUtils
 {
-	// Declaration of functions from file .cu
+	// Example wrapper function to image color inversion
 	void processImageWithCuda(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst);
+
+	// Example wrapper function to asynchronous image color inversion
 	void processImageWithCudaAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, cv::cuda::Stream& stream);
+
+	/* ==================================================================================================== */
+
+	void invertColor(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst);
+	void invertColorAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, cv::cuda::Stream& stream);
 }

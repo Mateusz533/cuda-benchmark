@@ -55,6 +55,14 @@ namespace CudaUtils
 
 	/* ==================================================================================================== */
 
+	constexpr int BLOCK_DIM = 16;
+	constexpr int WARP_SIZE = 32;
+
+	struct Size {
+		int width{};
+		int height{};
+	};
+
 	template<typename PixelType>
 	class DataAccessor
 	{
@@ -64,11 +72,11 @@ namespace CudaUtils
 		__device__ __forceinline__ PixelType& at(int x, int y) const
 			requires(!std::is_const_v<PixelType>)
 		{
-			return ((PixelType*)((uchar*)data + y * pitchBytes))[x];
+			return reinterpret_cast<PixelType*>(reinterpret_cast<uchar*>(data) + y * pitchBytes)[x];
 		}
 
 		__device__ __forceinline__ const PixelType& get(int x, int y) const {
-			return ((const PixelType*)((const uchar*)data + y * pitchBytes))[x];
+			return reinterpret_cast<const PixelType*>(reinterpret_cast<const uchar*>(data) + y * pitchBytes)[x];
 		}
 
 	private:
@@ -76,10 +84,7 @@ namespace CudaUtils
 		std::size_t pitchBytes{};
 	};
 
-	struct Size {
-		int width{};
-		int height{};
-	};
+	/* ==================================================================================================== */
 
 	template<typename PixelType>
 		requires(std::is_same_v<PixelType, uchar1> || std::is_same_v<PixelType, uchar3> || std::is_same_v<PixelType, uchar4>)

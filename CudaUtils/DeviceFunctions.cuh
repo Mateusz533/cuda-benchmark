@@ -56,6 +56,32 @@ namespace CudaUtils
 	/* ==================================================================================================== */
 
 	template<typename PixelType>
+	class DataAccessor
+	{
+	public:
+		DataAccessor(PixelType* data, std::size_t pitchBytes) : data{data}, pitchBytes{pitchBytes} {}
+
+		__device__ __forceinline__ PixelType& at(int x, int y) const
+			requires(!std::is_const_v<PixelType>)
+		{
+			return ((PixelType*)((uchar*)data + y * pitchBytes))[x];
+		}
+
+		__device__ __forceinline__ const PixelType& get(int x, int y) const {
+			return ((const PixelType*)((const uchar*)data + y * pitchBytes))[x];
+		}
+
+	private:
+		PixelType* data{};
+		std::size_t pitchBytes{};
+	};
+
+	struct Size {
+		int width{};
+		int height{};
+	};
+
+	template<typename PixelType>
 		requires(std::is_same_v<PixelType, uchar1> || std::is_same_v<PixelType, uchar3> || std::is_same_v<PixelType, uchar4>)
 	__device__ __forceinline__ PixelType invertColor(PixelType color) {
 		if constexpr(std::is_same_v<PixelType, uchar1>) {

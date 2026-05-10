@@ -1,3 +1,5 @@
+#include <cstddef>
+
 #include "CudaUtils.cuh"
 //
 #ifdef HAS_CUDA
@@ -17,8 +19,8 @@ namespace CudaUtils
 
 		const int width = srcView.cols;
 		const int height = srcView.rows;
-		const int inPitch = srcView.step;
-		const int outPitch = dst.step;
+		const std::size_t inPitch = srcView.step;
+		const std::size_t outPitch = dst.step;
 
 		const dim3 blockSize{16, 16};
 		const dim3 gridSize{
@@ -40,8 +42,8 @@ namespace CudaUtils
 
 		const int width = srcView.cols;
 		const int height = srcView.rows;
-		const int inPitch = srcView.step;
-		const int outPitch = dst.step;
+		const std::size_t inPitch = srcView.step;
+		const std::size_t outPitch = dst.step;
 
 		const dim3 blockSize{16, 16};
 		const dim3 gridSize{
@@ -64,19 +66,17 @@ namespace CudaUtils
 		// Change allocation size if not match
 		dst.create(srcView.size(), srcView.type());
 
-		const int width = srcView.cols;
-		const int height = srcView.rows;
-		const int inPitch = srcView.step;
-		const int outPitch = dst.step;
+		const Size size{srcView.cols, srcView.rows};
+		const DataAccessor input{srcView.ptr<PixelType>(), srcView.step};
+		const DataAccessor output{dst.ptr<PixelType>(), dst.step};
 
 		const dim3 blockSize{16, 16};
 		const dim3 gridSize{
-			(width + blockSize.x - 1) / blockSize.x,
-			(height + blockSize.y - 1) / blockSize.y,
+			(size.width + blockSize.x - 1) / blockSize.x,
+			(size.height + blockSize.y - 1) / blockSize.y,
 		};
 
-		unaryOperationKernel<PixelType, Operation><<<gridSize, blockSize>>>(
-			srcView.ptr<PixelType>(), dst.ptr<PixelType>(), width, height, inPitch, outPitch);
+		unaryOperationKernel<PixelType, Operation><<<gridSize, blockSize>>>(input, output, size);
 		cudaStreamSynchronize(0);
 	}
 
@@ -88,20 +88,18 @@ namespace CudaUtils
 		// Change allocation size if not match
 		dst.create(srcView.size(), srcView.type());
 
-		const int width = srcView.cols;
-		const int height = srcView.rows;
-		const int inPitch = srcView.step;
-		const int outPitch = dst.step;
+		const Size size{srcView.cols, srcView.rows};
+		const DataAccessor input{srcView.ptr<PixelType>(), srcView.step};
+		const DataAccessor output{dst.ptr<PixelType>(), dst.step};
 
 		const dim3 blockSize{16, 16};
 		const dim3 gridSize{
-			(width + blockSize.x - 1) / blockSize.x,
-			(height + blockSize.y - 1) / blockSize.y,
+			(size.width + blockSize.x - 1) / blockSize.x,
+			(size.height + blockSize.y - 1) / blockSize.y,
 		};
 
 		const auto cudaStream = cv::cuda::StreamAccessor::getStream(stream);
-		unaryOperationKernel<PixelType, Operation><<<gridSize, blockSize, 0, cudaStream>>>(
-			srcView.ptr<PixelType>(), dst.ptr<PixelType>(), width, height, inPitch, outPitch);
+		unaryOperationKernel<PixelType, Operation><<<gridSize, blockSize, 0, cudaStream>>>(input, output, size);
 	}
 
 	void invertColor(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst) {

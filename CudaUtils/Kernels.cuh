@@ -21,39 +21,38 @@ namespace CudaUtils
 	/* ==================================================================================================== */
 
 	template<typename PixelType>
-	__global__ void invertColorKernel(const PixelType* input, PixelType* output, int width, int height, int inPitch, int outPitch) {
+	__global__ void invertColorKernel(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size) {
 		const int x = blockIdx.x * blockDim.x + threadIdx.x;
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-		if(x < width && y < height) {
-			const PixelType inputPixel = get(input, inPitch, x, y);
-			PixelType& outputPixel = at(output, outPitch, x, y);
+		if(x < size.width && y < size.height) {
+			const PixelType inputPixel = input.get(x, y);
+			PixelType& outputPixel = output.at(x, y);
 			outputPixel = invertColor(inputPixel);
 		}
 	}
 
 	template<typename PixelType, typename Operation>
-	__global__ void unaryOperationKernel(const PixelType* input, PixelType* output, int width, int height, int inPitch, int outPitch) {
+	__global__ void unaryOperationKernel(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size) {
 		const int x = blockIdx.x * blockDim.x + threadIdx.x;
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-		if(x < width && y < height) {
-			const PixelType inputPixel = get(input, inPitch, x, y);
-			PixelType& outputPixel = at(output, outPitch, x, y);
+		if(x < size.width && y < size.height) {
+			const PixelType inputPixel = input.get(x, y);
+			PixelType& outputPixel = output.at(x, y);
 			outputPixel = Operation{}(inputPixel);
 		}
 	}
 
 	template<typename PixelType, typename Operation>
-	__global__ void binaryOperationKernel(const PixelType* inputLeft, const PixelType* inputRight, PixelType* output, int width, int height,
-										  int inLeftPitch, int inRightPitch, int outPitch) {
+	__global__ void binaryOperationKernel(DataAccessor<const PixelType> inputLeft, DataAccessor<const PixelType> inputRight, DataAccessor<PixelType> output, Size size) {
 		const int x = blockIdx.x * blockDim.x + threadIdx.x;
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-		if(x < width && y < height) {
-			const PixelType inputLeftPixel = get(inputLeft, inLeftPitch, x, y);
-			const PixelType inputRightPixel = get(inputRight, inRightPitch, x, y);
-			PixelType& outputPixel = at(output, outPitch, x, y);
+		if(x < size.width && y < size.height) {
+			const PixelType inputLeftPixel = inputLeft.get(x, y);
+			const PixelType inputRightPixel = inputRight.get(x, y);
+			PixelType& outputPixel = output.at(x, y);
 			outputPixel = Operation{}(inputLeftPixel, inputRightPixel);
 		}
 	}

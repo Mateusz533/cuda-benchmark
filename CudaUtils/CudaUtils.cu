@@ -28,7 +28,7 @@ namespace CudaUtils
 			(height + blockSize.y - 1) / blockSize.y,
 		};
 
-		processImageKernel<<<gridSize, blockSize>>>(
+		Kernels::processImage<<<gridSize, blockSize>>>(
 			srcView.ptr<uchar3>(), dst.ptr<uchar3>(), width, height, inPitch, outPitch);
 		cudaStreamSynchronize(0);
 	}
@@ -52,7 +52,7 @@ namespace CudaUtils
 		};
 
 		const auto cudaStream = cv::cuda::StreamAccessor::getStream(stream);
-		processImageKernel<<<gridSize, blockSize, 0, cudaStream>>>(
+		Kernels::processImage<<<gridSize, blockSize, 0, cudaStream>>>(
 			srcView.ptr<uchar3>(), dst.ptr<uchar3>(), width, height, inPitch, outPitch);
 	}
 
@@ -76,7 +76,7 @@ namespace CudaUtils
 			(size.height + blockSize.y - 1) / blockSize.y,
 		};
 
-		unaryOperationKernel<PixelType, Operation><<<gridSize, blockSize>>>(input, output, size);
+		Kernels::unaryOperation<PixelType, Operation><<<gridSize, blockSize>>>(input, output, size);
 		cudaStreamSynchronize(0);
 	}
 
@@ -99,7 +99,7 @@ namespace CudaUtils
 		};
 
 		const auto cudaStream = cv::cuda::StreamAccessor::getStream(stream);
-		unaryOperationKernel<PixelType, Operation><<<gridSize, blockSize, 0, cudaStream>>>(input, output, size);
+		Kernels::unaryOperation<PixelType, Operation><<<gridSize, blockSize, 0, cudaStream>>>(input, output, size);
 	}
 
 	void invertColor(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst) {

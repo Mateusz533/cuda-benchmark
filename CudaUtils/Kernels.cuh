@@ -32,28 +32,53 @@ namespace CudaUtils::Kernels
 		}
 	}
 
-	template<typename PixelType, typename Operation>
-	__global__ void unaryOperation(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size) {
+	template<typename PixelType, typename Operation, typename... Args>
+	__global__ void unaryOperation(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size, Args... args) {
 		const int x = blockIdx.x * blockDim.x + threadIdx.x;
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if(x < size.width && y < size.height) {
-			const PixelType inputPixel = input.get(x, y);
-			PixelType& outputPixel = output.at(x, y);
-			outputPixel = Operation{}(inputPixel);
+			output.at(x, y) = Operation{}(input.get(x, y), args...);
 		}
 	}
 
-	template<typename PixelType, typename Operation>
-	__global__ void binaryOperation(DataAccessor<const PixelType> inputLeft, DataAccessor<const PixelType> inputRight, DataAccessor<PixelType> output, Size size) {
+	template<typename PixelType, typename Operation, typename... Args>
+	__global__ void binaryOperation(DataAccessor<const PixelType> inputLeft, DataAccessor<const PixelType> inputRight, DataAccessor<PixelType> output, Size size, Args... args) {
 		const int x = blockIdx.x * blockDim.x + threadIdx.x;
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if(x < size.width && y < size.height) {
-			const PixelType inputLeftPixel = inputLeft.get(x, y);
-			const PixelType inputRightPixel = inputRight.get(x, y);
-			PixelType& outputPixel = output.at(x, y);
-			outputPixel = Operation{}(inputLeftPixel, inputRightPixel);
+			output.at(x, y) = Operation{}(inputLeft.get(x, y), inputRight.get(x, y), args...);
+		}
+	}
+
+	template<typename PixelType, typename Operation, typename... Args>
+	__global__ void nonlinearInputUnaryOperation(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size, Args... args) {
+		const int x = blockIdx.x * blockDim.x + threadIdx.x;
+		const int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+		if(x < size.width && y < size.height) {
+			output.at(x, y) = Operation{}(input, x, y, args...);
+		}
+	}
+
+	template<typename PixelType, typename Operation, typename... Args>
+	__global__ void nonlinearOutputUnaryOperation(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size, Args... args) {
+		const int x = blockIdx.x * blockDim.x + threadIdx.x;
+		const int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+		if(x < size.width && y < size.height) {
+			Operation{}(output, input.get(x, y), x, y, args...);
+		}
+	}
+
+	template<typename PixelType, typename Operation, typename... Args>
+	__global__ void nonlinearUnaryOperation(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size, Args... args) {
+		const int x = blockIdx.x * blockDim.x + threadIdx.x;
+		const int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+		if(x < size.width && y < size.height) {
+			Operation{}(input, output, x, y, args...);
 		}
 	}
 }

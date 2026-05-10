@@ -32,6 +32,8 @@ namespace CudaUtils::Kernels
 		}
 	}
 
+	/* ==================================================================================================== */
+
 	template<typename PixelType, typename Operation, typename... Args>
 	__global__ void unaryOperation(DataAccessor<const PixelType> input, DataAccessor<PixelType> output, Size size, Args... args) {
 		const int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -58,7 +60,7 @@ namespace CudaUtils::Kernels
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if(x < size.width && y < size.height) {
-			output.at(x, y) = Operation{}(input, x, y, args...);
+			output.at(x, y) = Operation{}(input, x, y, size, args...);
 		}
 	}
 
@@ -68,7 +70,7 @@ namespace CudaUtils::Kernels
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if(x < size.width && y < size.height) {
-			Operation{}(output, input.get(x, y), x, y, args...);
+			Operation{}(output, input.get(x, y), x, y, size, args...);
 		}
 	}
 
@@ -78,7 +80,7 @@ namespace CudaUtils::Kernels
 		const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if(x < size.width && y < size.height) {
-			Operation{}(input, output, x, y, args...);
+			Operation{}(input, output, x, y, size, args...);
 		}
 	}
 }

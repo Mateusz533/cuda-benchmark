@@ -21,4 +21,6 @@ namespace CudaUtils
 
 	void invertColor(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst);
 	void invertColorAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, cv::cuda::Stream& stream);
+	void warpAffine(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, const cv::Matx23f& transform);
+	void warpAffineAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, const cv::Matx23f& transform, cv::cuda::Stream& stream);
 }

@@ -32,6 +32,33 @@ namespace CudaUtils::Kernels
 		}
 	}
 
+	__global__ void reduceSumKernel(const float* __restrict__ partialSums, float* __restrict__ totalSum, int size) {
+		constexpr int BLOCK_1D_SIZE = BLOCK_DIM * BLOCK_DIM;
+		constexpr int WARPS_PER_BLOCK = BLOCK_1D_SIZE / WARP_SIZE;
+		__shared__ float sharedSum[WARPS_PER_BLOCK];
+
+		const int threadId = threadIdx.x;
+		const int index = blockIdx.x * blockDim.x + threadId;
+		const int warpId = threadId / WARP_SIZE;
+
+		// Block-level reduction
+		const float inputValue = (index < size) ? partialSums[index] : 0.0f;
+		const float warpSum = warpReduceSum(inputValue);
+
+		if(threadId % WARP_SIZE == 0) {
+			sharedSum[warpId] = warpSum;
+		}
+		__syncthreads();
+
+		if(warpId == 0) {
+			const float warpSum = (threadId < WARPS_PER_BLOCK) ? sharedSum[threadId] : 0.0f;
+			const float blockSum = warpReduceSum(warpSum);
+			if(threadId == 0) {
+				atomicAdd(totalSum, blockSum);
+			}
+		}
+	}
+
 	/* ==================================================================================================== */
 
 	template<typename PixelType, typename Operation, typename... Args>

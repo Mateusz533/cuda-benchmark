@@ -10,23 +10,25 @@
 
 namespace CudaUtils
 {
-	// Example CUDA device function to image color inversion
-	__device__ __forceinline__ uchar3 processImage(uchar3 color) {
-		return make_uchar3(255U - color.x, 255U - color.y, 255U - color.z);
-	}
+	constexpr int BLOCK_DIM = 16;
+	constexpr int WARP_SIZE = 32;  // See `warpSize` in `<__clang_cuda_builtin_vars.h>`
 
-	// Example CUDA device functor to image color inversion
-	struct ProcessImage {
-		__device__ __forceinline__ uchar3 operator()(uchar3 color) { return processImage(color); }
-
+	struct Empty {
 	private:
 		[[no_unique_address]] const char nothing[0]{};
 	};
 
 	/* ==================================================================================================== */
 
-	constexpr int BLOCK_DIM = 16;
-	constexpr int WARP_SIZE = 32;  // See `warpSize` in `<__clang_cuda_builtin_vars.h>`
+	// Example CUDA device function to image color inversion
+	__device__ __forceinline__ uchar3 processImage(uchar3 color) {
+		return make_uchar3(255U - color.x, 255U - color.y, 255U - color.z);
+	}
+
+	// Example CUDA device functor to image color inversion
+	struct ProcessImage : private Empty {
+		__device__ __forceinline__ uchar3 operator()(uchar3 color) { return processImage(color); }
+	};
 
 	/* ==================================================================================================== */
 
@@ -107,11 +109,8 @@ namespace CudaUtils
 	}
 
 	template<typename PixelType>
-	struct InvertColor {
+	struct InvertColor : private Empty {
 		__device__ __forceinline__ PixelType operator()(PixelType color) { return invertColor(color); }
-
-	private:
-		[[no_unique_address]] const char nothing[0]{};
 	};
 
 	/* ==================================================================================================== */
@@ -154,7 +153,7 @@ namespace CudaUtils
 	}
 
 	template<typename PixelType>
-	struct WarpAffine {
+	struct WarpAffine : private Empty {
 		__device__ __forceinline__ PixelType operator()(DataAccessor<const PixelType> input, int x, int y, Size size, const Matrix<float, 2, 3> invTransform) {
 			const float srcX = invTransform.data[0][0] * x + invTransform.data[0][1] * y + invTransform.data[0][2];
 			const float srcY = invTransform.data[1][0] * x + invTransform.data[1][1] * y + invTransform.data[1][2];
@@ -162,8 +161,5 @@ namespace CudaUtils
 			const bool inputInRange = isInRange(srcX, 0.0f, size.width - 1.0f) && isInRange(srcY, 0.0f, size.height - 1.0f);
 			return inputInRange ? bilinearInterpolate<PixelType>(input, size, srcX, srcY) : PixelType{};
 		}
-
-	private:
-		[[no_unique_address]] const char nothing[0]{};
 	};
 }

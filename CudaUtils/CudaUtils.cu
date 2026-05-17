@@ -30,7 +30,7 @@ namespace CudaUtils
 
 		Kernels::processImage<<<gridSize, blockSize>>>(
 			srcView.ptr<uchar3>(), dst.ptr<uchar3>(), width, height, inPitch, outPitch);
-		cudaStreamSynchronize(0);
+		cudaStreamSynchronize(nullptr);
 	}
 
 	void processImageWithCudaAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, cv::cuda::Stream& stream) {

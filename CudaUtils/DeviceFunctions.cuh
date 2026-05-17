@@ -25,6 +25,11 @@ namespace CudaUtils
 
 	/* ==================================================================================================== */
 
+	constexpr int BLOCK_DIM = 16;
+	constexpr int WARP_SIZE = 32;  // See `warpSize` in `<__clang_cuda_builtin_vars.h>`
+
+	/* ==================================================================================================== */
+
 	template<typename T>
 	__device__ __forceinline__ T& at(T* array, int pitchBytes, int x, int y) {
 		return ((T*)((uchar*)array + y * pitchBytes))[x];
@@ -33,14 +38,6 @@ namespace CudaUtils
 	template<typename T>
 	__device__ __forceinline__ const T& get(const T* array, int pitchBytes, int x, int y) {
 		return ((const T*)((const uchar*)array + y * pitchBytes))[x];
-	}
-
-	template<typename T>
-	__device__ __forceinline__ T warpReduceSum(T val) {
-		for(int offset = warpSize / 2; offset > 0; offset /= 2) {
-			val += __shfl_down_sync(0xffffffff, val, offset);
-		}
-		return val;
 	}
 
 	template<typename T>
@@ -53,10 +50,15 @@ namespace CudaUtils
 		return v < minVal ? minVal : (v > maxVal ? maxVal : v);
 	}
 
-	/* ==================================================================================================== */
+	template<typename T>
+	__device__ __forceinline__ T warpReduceSum(T val) {
+		for(int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
+			val += __shfl_down_sync(0xffffffff, val, offset);
+		}
+		return val;
+	}
 
-	constexpr int BLOCK_DIM = 16;
-	constexpr int WARP_SIZE = 32;
+	/* ==================================================================================================== */
 
 	struct Size {
 		int width{};
@@ -87,7 +89,7 @@ namespace CudaUtils
 
 	template<typename T, size_t N, size_t M>
 	struct Matrix {
-		float data[N][M];
+		T data[N][M];
 	};
 
 	/* ==================================================================================================== */

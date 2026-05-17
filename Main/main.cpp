@@ -3,6 +3,8 @@
 //
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/cudaarithm.hpp>
+#include <opencv2/cudafilters.hpp>
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -100,9 +102,28 @@ int main() {
 	cv::cuda::GpuMat bgraImg{};
 	cv::cuda::cvtColor(bgrImg, grayImg, cv::COLOR_BGR2GRAY);
 	cv::cuda::cvtColor(bgrImg, bgraImg, cv::COLOR_BGR2BGRA);
+
 	cv::Matx23d affineTransform = {
 		+0.8, -0.6, +0.1 * grayImg.cols + 0.3 * grayImg.rows,
 		+0.6, +0.8, -0.3 * grayImg.cols + 0.1 * grayImg.rows};
+
+	cv::Mat maxLaplacianImageHost(demoImage.rows, demoImage.cols, CV_8UC1);
+	for(int x = 0; x < demoImage.cols; ++x) {
+		for(int y = 0; y < demoImage.rows; ++y) {
+			maxLaplacianImageHost.at<uchar>(y, x) = 255 * ((x + y) % 2);
+		}
+	}
+
+	cv::cuda::GpuMat maxLaplacianImage{maxLaplacianImageHost};
+	const auto laplaceFilterGray = cv::cuda::createLaplacianFilter(CV_32FC1, CV_32FC1, 1);
+
+	const auto syncLaplacianMeanSqrFunc = [&laplaceFilterGray](const cv::cuda::GpuMat& src) {
+		constexpr int MAX_PIXEL_VALUE = (4 * 255) * (4 * 255);
+		cv::cuda::GpuMat srcFloat, tempDst;
+		src.convertTo(srcFloat, CV_32F);
+		laplaceFilterGray.get()->apply(srcFloat, tempDst);
+		return cv::cuda::sqrSum(tempDst) / tempDst.size().area() / MAX_PIXEL_VALUE;
+	};
 
 	cv::cuda::GpuMat tempDest;
 
@@ -143,4 +164,7 @@ int main() {
 	runPerformanceTestWithStream<N>("warpAffine (GRAY image)", asyncWarpAffine, grayImg, tempDest, affineTransform, grayImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 	runPerformanceTestWithStream<N>("warpAffine (BGR  image)", asyncWarpAffine, bgrImg, tempDest, affineTransform, bgrImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 	runPerformanceTestWithStream<N>("warpAffine (BGRA image)", asyncWarpAffine, bgraImg, tempDest, affineTransform, bgraImg.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+
+	runPerformanceTest<N>("laplacianMeanSqr (Real  image)", syncLaplacianMeanSqrFunc, grayImg);
+	runPerformanceTest<N>("laplacianMeanSqr (Ideal image)", syncLaplacianMeanSqrFunc, maxLaplacianImage);
 }

@@ -10,7 +10,8 @@
 
 namespace CudaUtils
 {
-	constexpr int BLOCK_DIM = 16;
+	constexpr int SQUARE_BLOCK_DIM = 16;
+	constexpr int BLOCK_TOTAL_SIZE = SQUARE_BLOCK_DIM * SQUARE_BLOCK_DIM;
 	constexpr int WARP_SIZE = 32;  // See `warpSize` in `<__clang_cuda_builtin_vars.h>`
 
 	struct Empty {
@@ -58,6 +59,28 @@ namespace CudaUtils
 			val += __shfl_down_sync(0xffffffff, val, offset);
 		}
 		return val;
+	}
+
+	template<typename T, typename Func>
+	__device__ __forceinline__ void blockReduceSum(T inputValue, int threadId, Func applySumFunc) {
+		constexpr int WARPS_PER_BLOCK = BLOCK_TOTAL_SIZE / WARP_SIZE;
+		__shared__ T sharedSum[WARPS_PER_BLOCK];
+
+		const int warpId = threadId / WARP_SIZE;
+		const T warpSum = warpReduceSum(inputValue);
+
+		if(threadId % WARP_SIZE == 0) {
+			sharedSum[warpId] = warpSum;
+		}
+		__syncthreads();
+
+		if(warpId == 0) {
+			const T warpSum = (threadId < WARPS_PER_BLOCK) ? sharedSum[threadId] : T(0);
+			const T blockSum = warpReduceSum(warpSum);
+			if(threadId == 0) {
+				applySumFunc(blockSum);
+			}
+		}
 	}
 
 	/* ==================================================================================================== */

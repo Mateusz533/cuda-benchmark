@@ -22,7 +22,7 @@ namespace CudaUtils
 		const std::size_t inPitch = srcView.step;
 		const std::size_t outPitch = dst.step;
 
-		const dim3 blockSize{BLOCK_DIM, BLOCK_DIM};
+		const dim3 blockSize{SQUARE_BLOCK_DIM, SQUARE_BLOCK_DIM};
 		const dim3 gridSize{
 			(width + blockSize.x - 1) / blockSize.x,
 			(height + blockSize.y - 1) / blockSize.y,
@@ -45,7 +45,7 @@ namespace CudaUtils
 		const std::size_t inPitch = srcView.step;
 		const std::size_t outPitch = dst.step;
 
-		const dim3 blockSize{BLOCK_DIM, BLOCK_DIM};
+		const dim3 blockSize{SQUARE_BLOCK_DIM, SQUARE_BLOCK_DIM};
 		const dim3 gridSize{
 			(width + blockSize.x - 1) / blockSize.x,
 			(height + blockSize.y - 1) / blockSize.y,
@@ -70,7 +70,7 @@ namespace CudaUtils
 		const DataAccessor input{srcView.ptr<PixelType>(), srcView.step};
 		const DataAccessor output{dst.ptr<PixelType>(), dst.step};
 
-		const dim3 blockSize{BLOCK_DIM, BLOCK_DIM};
+		const dim3 blockSize{SQUARE_BLOCK_DIM, SQUARE_BLOCK_DIM};
 		const dim3 gridSize{
 			(size.width + blockSize.x - 1) / blockSize.x,
 			(size.height + blockSize.y - 1) / blockSize.y,
@@ -92,7 +92,7 @@ namespace CudaUtils
 		const DataAccessor input{srcView.ptr<PixelType>(), srcView.step};
 		const DataAccessor output{dst.ptr<PixelType>(), dst.step};
 
-		const dim3 blockSize{BLOCK_DIM, BLOCK_DIM};
+		const dim3 blockSize{SQUARE_BLOCK_DIM, SQUARE_BLOCK_DIM};
 		const dim3 gridSize{
 			(size.width + blockSize.x - 1) / blockSize.x,
 			(size.height + blockSize.y - 1) / blockSize.y,

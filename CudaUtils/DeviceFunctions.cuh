@@ -117,6 +117,32 @@ namespace CudaUtils
 		T data[N][M];
 	};
 
+	template<typename Pixel, std::size_t DIM>
+	class TileView
+	{
+	public:
+		__device__ __forceinline__ TileView(Pixel (&tile)[DIM][DIM]) : tile(tile) {}
+
+		__device__ __forceinline__ Pixel& at(int x, int y) {
+			return tile[y][x];
+		}
+
+		__device__ __forceinline__ const Pixel& get(int x, int y) const {
+			return tile[y][x];
+		}
+
+		__device__ __forceinline__ static Size size() {
+			return Size{DIM, DIM};
+		}
+
+		__device__ __forceinline__ static int area() {
+			return DIM * DIM;
+		}
+
+	private:
+		Pixel (&tile)[DIM][DIM];
+	};
+
 	/* ==================================================================================================== */
 
 	template<typename PixelType>

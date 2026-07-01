@@ -125,6 +125,8 @@ int main() {
 		return cv::cuda::sqrSum(tempDst) / tempDst.size().area() / MAX_PIXEL_VALUE;
 	};
 
+	auto laplaceRmsCalculator = CudaUtils::LaplaceRmsCalculator();
+
 	cv::cuda::GpuMat tempDest;
 
 	/* ======================================================================================================================== */
@@ -167,4 +169,7 @@ int main() {
 
 	runPerformanceTest<N>("laplacianMeanSqr (Real  image)", syncLaplacianMeanSqrFunc, grayImg);
 	runPerformanceTest<N>("laplacianMeanSqr (Ideal image)", syncLaplacianMeanSqrFunc, maxLaplacianImage);
+
+	runPerformanceTestWithStream<N>("laplacianRms (Real  image)", &CudaUtils::LaplaceRmsCalculator::Calculate, laplaceRmsCalculator, grayImg, 1);
+	runPerformanceTestWithStream<N>("laplacianRms (Ideal image)", &CudaUtils::LaplaceRmsCalculator::Calculate, laplaceRmsCalculator, maxLaplacianImage, 1);
 }

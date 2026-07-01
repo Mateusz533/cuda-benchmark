@@ -150,4 +150,69 @@ namespace CudaUtils
 		warpAffineAsync(src, dst, transform, defaultStream);
 		defaultStream.waitForCompletion();
 	}
+
+	/* ==================================================================================================== */
+
+	LaplaceRmsCalculator::LaplaceRmsCalculator() {
+		cudaMalloc(&dTotalSum, sizeof(float));
+	}
+
+	LaplaceRmsCalculator::~LaplaceRmsCalculator() {
+		cudaFree(dTotalSum);
+	}
+
+	double LaplaceRmsCalculator::Calculate(const cv::cuda::GpuMat& src, int kernelSize, cv::cuda::Stream& stream) {
+		if(kernelSize != 1 && kernelSize != 3) {
+			return -1.0;
+		}
+
+		if(src.type() != CV_8U || src.cols < kernelSize || src.rows < kernelSize) {
+			return -1.0;
+		}
+
+		const Size size{src.cols, src.rows};
+		const DataAccessor input{src.ptr<uchar>(), src.step};
+
+		const dim3 blockSize{SQUARE_BLOCK_DIM, SQUARE_BLOCK_DIM};
+		const dim3 gridSize{
+			(size.width + blockSize.x - 1) / blockSize.x,
+			(size.height + blockSize.y - 1) / blockSize.y,
+		};
+
+		// Change allocation size if not match
+		const int blockCount = gridSize.x * gridSize.y;
+		blockSums.create(1, blockCount, CV_32F);
+
+		const auto cudaStream = cv::cuda::StreamAccessor::getStream(stream);
+
+		cudaMemsetAsync(dTotalSum, 0, sizeof(float), cudaStream);
+		auto* blockSumsPtr = blockSums.ptr<float>();
+
+		if(kernelSize == 1) {
+			Kernels::laplacianSquareSum<1><<<gridSize, blockSize, 0, cudaStream>>>(input, blockSumsPtr, size);
+		} else if(kernelSize == 3) {
+			Kernels::laplacianSquareSum<3><<<gridSize, blockSize, 0, cudaStream>>>(input, blockSumsPtr, size);
+		} else {
+			// Error handling
+		}
+
+		{
+			const dim3 blockSize{BLOCK_TOTAL_SIZE};
+			const dim3 gridSize{(blockCount + blockSize.x - 1) / blockSize.x};
+			Kernels::reduceSum<<<gridSize, blockSize, 0, cudaStream>>>(blockSumsPtr, dTotalSum, blockCount);
+		}
+
+		float hTotalSum = 1.0;
+		cudaMemcpyAsync(&hTotalSum, dTotalSum, sizeof(float), cudaMemcpyDeviceToHost, cudaStream);
+		stream.waitForCompletion();
+
+		const long maskDim = (kernelSize == 1 ? 3 : 3);	 // More option after more variants implementation
+		const long kernelMultiplier = (kernelSize == 1 ? 4 : 8);
+		const long maxPixelValue = std::pow(kernelMultiplier * 255L, 2L);
+
+		const long effectiveArea = (size.width - maskDim + 1) * (size.height - maskDim + 1);
+		const double variance = double(hTotalSum) / (maxPixelValue * effectiveArea);
+
+		return std::sqrt(variance);
+	}
 }

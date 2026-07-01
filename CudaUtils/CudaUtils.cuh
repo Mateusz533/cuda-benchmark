@@ -23,4 +23,24 @@ namespace CudaUtils
 	void invertColorAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, cv::cuda::Stream& stream);
 	void warpAffine(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, const cv::Matx23f& transform);
 	void warpAffineAsync(const cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst, const cv::Matx23f& transform, cv::cuda::Stream& stream);
+
+	/* ==================================================================================================== */
+
+	class LaplaceRmsCalculator
+	{
+	public:
+		LaplaceRmsCalculator();
+		LaplaceRmsCalculator(const LaplaceRmsCalculator&) = delete;
+		LaplaceRmsCalculator(LaplaceRmsCalculator&&) = delete;
+		LaplaceRmsCalculator& operator=(const LaplaceRmsCalculator&) = delete;
+		LaplaceRmsCalculator& operator=(LaplaceRmsCalculator&&) = delete;
+
+		~LaplaceRmsCalculator();
+
+		double Calculate(const cv::cuda::GpuMat& src, int kernelSize = 1, cv::cuda::Stream& stream = cv::cuda::Stream::Null());
+
+	private:
+		float* dTotalSum;
+		cv::cuda::GpuMat blockSums;
+	};
 }

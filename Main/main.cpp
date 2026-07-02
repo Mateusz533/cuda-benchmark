@@ -172,4 +172,7 @@ int main() {
 
 	runPerformanceTestWithStream<N>("laplacianRms (Real  image)", &CudaUtils::LaplaceRmsCalculator::Calculate, laplaceRmsCalculator, grayImg, 1);
 	runPerformanceTestWithStream<N>("laplacianRms (Ideal image)", &CudaUtils::LaplaceRmsCalculator::Calculate, laplaceRmsCalculator, maxLaplacianImage, 1);
+
+	runPerformanceTestWithStream<N>("laplacianRmsAlt (Real  image)", &CudaUtils::LaplaceRmsCalculator::CalculateAlt, laplaceRmsCalculator, grayImg, 1);
+	runPerformanceTestWithStream<N>("laplacianRmsAlt (Ideal image)", &CudaUtils::LaplaceRmsCalculator::CalculateAlt, laplaceRmsCalculator, maxLaplacianImage, 1);
 }

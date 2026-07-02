@@ -38,6 +38,7 @@ namespace CudaUtils
 		~LaplaceRmsCalculator();
 
 		double Calculate(const cv::cuda::GpuMat& src, int kernelSize = 1, cv::cuda::Stream& stream = cv::cuda::Stream::Null());
+		double CalculateAlt(const cv::cuda::GpuMat& src, int kernelSize = 1, cv::cuda::Stream& stream = cv::cuda::Stream::Null());
 
 	private:
 		float* dTotalSum;

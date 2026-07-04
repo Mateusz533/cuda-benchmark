@@ -237,12 +237,11 @@ namespace CudaUtils
 		const auto cudaStream = cv::cuda::StreamAccessor::getStream(stream);
 
 		cudaMemsetAsync(dTotalSum, 0, sizeof(float), cudaStream);
-		auto* blockSumsPtr = blockSums.ptr<float>();
 
 		if(kernelSize == 1) {
-			Kernels::laplacianSquareSumAlt<1><<<gridSize, blockSize, 0, cudaStream>>>(input, blockSumsPtr, size);
+			Kernels::laplacianSquareSumAlt<1><<<gridSize, blockSize, 0, cudaStream>>>(input, dTotalSum, size);
 		} else if(kernelSize == 3) {
-			Kernels::laplacianSquareSumAlt<3><<<gridSize, blockSize, 0, cudaStream>>>(input, blockSumsPtr, size);
+			Kernels::laplacianSquareSumAlt<3><<<gridSize, blockSize, 0, cudaStream>>>(input, dTotalSum, size);
 		} else {
 			// Error handling
 		}

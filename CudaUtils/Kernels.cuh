@@ -69,7 +69,7 @@ namespace CudaUtils::Kernels
 				const int inputY = tilePixelY + blockIdx.y * blockDim.y - HALO_WIDTH;
 
 				const bool inputInRange = isInRange(inputX, 0, size.width - 1) && isInRange(inputY, 0, size.height - 1);
-				tileView.at(tilePixelX, tilePixelX) = inputInRange ? input.get(inputX, inputY) : 0;
+				tileView.at(tilePixelX, tilePixelY) = inputInRange ? input.get(inputX, inputY) : 0;
 			}
 		}
 		__syncthreads();
@@ -131,7 +131,7 @@ namespace CudaUtils::Kernels
 				const int inputY = tilePixelY + blockIdx.y * blockDim.y - HALO_WIDTH;
 
 				const bool inputInRange = isInRange(inputX, 0, size.width - 1) && isInRange(inputY, 0, size.height - 1);
-				tileView.at(tilePixelX, tilePixelX) = inputInRange ? input.get(inputX, inputY) : 0;
+				tileView.at(tilePixelX, tilePixelY) = inputInRange ? input.get(inputX, inputY) : 0;
 			}
 		}
 		__syncthreads();

@@ -1,5 +1,6 @@
 #pragma once
 //
+#include <cstddef>
 #include <type_traits>
 //
 #ifdef HAS_CUDA
@@ -85,6 +86,25 @@ namespace CudaUtils
 
 	/* ==================================================================================================== */
 
+	template<typename T>
+	concept PixelLike =
+		std::is_same_v<T, char1> || std::is_same_v<T, char2> || std::is_same_v<T, char3> || std::is_same_v<T, char4> ||
+		std::is_same_v<T, uchar1> || std::is_same_v<T, uchar2> || std::is_same_v<T, uchar3> || std::is_same_v<T, uchar4> ||
+		std::is_same_v<T, ushort1> || std::is_same_v<T, ushort2> || std::is_same_v<T, ushort3> || std::is_same_v<T, ushort4> ||
+		std::is_same_v<T, short1> || std::is_same_v<T, short2> || std::is_same_v<T, short3> || std::is_same_v<T, short4> ||
+		std::is_same_v<T, int1> || std::is_same_v<T, int2> || std::is_same_v<T, int3> || std::is_same_v<T, int4> ||
+		std::is_same_v<T, uint1> || std::is_same_v<T, uint2> || std::is_same_v<T, uint3> || std::is_same_v<T, uint4> ||
+		std::is_same_v<T, long1> || std::is_same_v<T, long2> || std::is_same_v<T, long3> || std::is_same_v<T, long4> ||
+		std::is_same_v<T, ulong1> || std::is_same_v<T, ulong2> || std::is_same_v<T, ulong3> || std::is_same_v<T, ulong4> ||
+		std::is_same_v<T, float1> || std::is_same_v<T, float2> || std::is_same_v<T, float3> || std::is_same_v<T, float4> ||
+		std::is_same_v<T, double1> || std::is_same_v<T, double2> || std::is_same_v<T, double3> || std::is_same_v<T, double4>;
+
+	template<PixelLike T>
+	constexpr std::size_t CHANNELS = sizeof(T) / sizeof(std::declval<T>().x);
+
+	template<PixelLike T>
+	using ChannelType = decltype(std::declval<T>().x);
+
 	struct Size {
 		int width{};
 		int height{};
@@ -112,7 +132,7 @@ namespace CudaUtils
 		std::size_t pitchBytes{};
 	};
 
-	template<typename T, size_t N, size_t M>
+	template<typename T, std::size_t N, std::size_t M>
 	struct Matrix {
 		T data[N][M];
 	};
@@ -121,7 +141,7 @@ namespace CudaUtils
 	class TileView
 	{
 	public:
-		__device__ __forceinline__ TileView(Pixel (&tile)[DIM][DIM]) : tile(tile) {}
+		__device__ __forceinline__ TileView(Pixel (&tile)[DIM][DIM]) : tile{tile} {}
 
 		__device__ __forceinline__ Pixel& at(int x, int y) {
 			return tile[y][x];
@@ -145,7 +165,7 @@ namespace CudaUtils
 
 	/* ==================================================================================================== */
 
-	template<typename PixelType>
+	template<PixelLike PixelType>
 		requires(std::is_same_v<PixelType, uchar1> || std::is_same_v<PixelType, uchar3> || std::is_same_v<PixelType, uchar4>)
 	__device__ __forceinline__ PixelType invertColor(PixelType color) {
 		if constexpr(std::is_same_v<PixelType, uchar1>) {
@@ -157,14 +177,14 @@ namespace CudaUtils
 		}
 	}
 
-	template<typename PixelType>
+	template<PixelLike PixelType>
 	struct InvertColor : private Empty {
 		__device__ __forceinline__ PixelType operator()(PixelType color) { return invertColor(color); }
 	};
 
 	/* ==================================================================================================== */
 
-	template<typename PixelType>
+	template<PixelLike PixelType>
 	__device__ PixelType bilinearInterpolate(DataAccessor<const PixelType> input, Size size, float x, float y) {
 		x = clamp(x, 0.0f, static_cast<float>(size.width - 1));
 		y = clamp(y, 0.0f, static_cast<float>(size.height - 1));
@@ -187,21 +207,22 @@ namespace CudaUtils
 		const float w01 = (1.0f - dx) * dy;
 		const float w11 = dx * dy;
 
+		using Type = ChannelType<PixelType>;
 		PixelType result;
 
-		for(int i = 0; i < sizeof(PixelType); ++i) {
-			const float value = w00 * reinterpret_cast<const uchar*>(&p00)[i] +
-								w10 * reinterpret_cast<const uchar*>(&p10)[i] +
-								w01 * reinterpret_cast<const uchar*>(&p01)[i] +
-								w11 * reinterpret_cast<const uchar*>(&p11)[i];
+		for(std::size_t i = 0; i < CHANNELS<PixelType>; ++i) {
+			const float value = w00 * reinterpret_cast<const Type*>(&p00)[i] +
+								w10 * reinterpret_cast<const Type*>(&p10)[i] +
+								w01 * reinterpret_cast<const Type*>(&p01)[i] +
+								w11 * reinterpret_cast<const Type*>(&p11)[i];
 
-			reinterpret_cast<uchar*>(&result)[i] = static_cast<uchar>(value + 0.5f);
+			reinterpret_cast<Type*>(&result)[i] = static_cast<Type>(value + 0.5f);
 		}
 
 		return result;
 	}
 
-	template<typename PixelType>
+	template<PixelLike PixelType>
 	struct WarpAffine : private Empty {
 		__device__ __forceinline__ PixelType operator()(DataAccessor<const PixelType> input, int x, int y, Size size, const Matrix<float, 2, 3> invTransform) {
 			const float srcX = invTransform.data[0][0] * x + invTransform.data[0][1] * y + invTransform.data[0][2];
